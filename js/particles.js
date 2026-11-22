@@ -5,6 +5,7 @@
     var TREE_H=config.treeHeight,HEART_Y=config.heartY,CAMERA_D=config.cameraDistance;
     var bluePalette=config.palettes.blue,ribbonPalette=config.palettes.ribbon;
     var heartPalette=config.palettes.heart,goldPalette=config.palettes.gold;
+    var ornamentBuilder=app.createOrnamentBuilder(config);
     function pick(list){ return list[Math.floor(Math.random()*list.length)]; }
 
     function buildParticles(layout){
@@ -20,7 +21,7 @@
       var bellN=6,bellPoints=280,heroN=mobile?10:14;
       var fireworkN=mobile?3:4,fireworkPoints=mobile?160:220;
       var introPoints=mobile?120:180,introBellN=3,linePoints=240,introBellPoints=mobile?480:640;
-      var total=dustN+ribbonN+heartN+groundN+ambientN+bellN*bellPoints+heroN+fireworkN*fireworkPoints+introPoints*2+introBellN*(introBellPoints+linePoints)+snowN+ringN*3;
+      var total=dustN+ribbonN+heartN+groundN+ambientN+bellN*bellPoints+heroN+fireworkN*fireworkPoints+introPoints*2+introBellN*(introBellPoints+linePoints)+snowN+ringN*3+ornamentBuilder.budget(mobile);
       var data={
         aPosition:new Float32Array(total*3),
         aScatter:new Float32Array(total*3),
@@ -29,7 +30,7 @@
         aMisc:new Float32Array(total*4)
       };
       var index=0;
-      function add(x,y,z,color,params,size,alpha,kind){
+      function add(x,y,z,color,params,size,alpha,kind,seed){
         var i=index++,i3=i*3,i4=i*4;
         data.aPosition[i3]=x; data.aPosition[i3+1]=y; data.aPosition[i3+2]=z;
         var a=Math.random()*Math.PI*2;
@@ -42,7 +43,7 @@
         data.aColor[i3]=color[0]; data.aColor[i3+1]=color[1]; data.aColor[i3+2]=color[2];
         for(var p=0;p<4;p++) data.aParams[i4+p]=params[p]||0;
         data.aMisc[i4]=size; data.aMisc[i4+1]=alpha;
-        data.aMisc[i4+2]=Math.random(); data.aMisc[i4+3]=kind;
+        data.aMisc[i4+2]=seed===undefined?Math.random():seed; data.aMisc[i4+3]=kind;
         return i;
       }
 
@@ -174,6 +175,8 @@
         var br=radius*Math.pow(1-by/TREE_H,1.02)*(mobile?0.90+Math.random()*0.10:1.06+Math.random()*0.12);
         addBell(Math.cos(ba)*br,by,Math.sin(ba)*br,0.92+Math.random()*0.20);
       }
+      var ornamentCount=ornamentBuilder.build({radius:radius,mobile:mobile,emit:add});
+      if(ornamentCount!==ornamentBuilder.budget(mobile)) throw new Error('Ornament particle budget mismatch');
 
       // 三枚大型铃铛从不同深度落下，随后散成星尘并接入两道光迹
       var introBellLayout=[
